@@ -1,0 +1,105 @@
+#uselib "user32.dll"
+#func global SendInput "SendInput" int, sptr, int
+
+#uselib "winmm.dll"
+#func global timeGetTime "timeGetTime"
+
+#module
+
+#defcfunc GetMiliSec
+	timeGetTime
+	return stat
+
+#deffunc MoveCusor int a_dx, int a_dy
+	NUM_INPUT_MEMBERS = 7
+	MOUSEEVENTF_MOVE = 1
+	num  = 1
+	dim ary_mouse_input, NUM_INPUT_MEMBERS
+	ary_mouse_input(0) = 0
+	ary_mouse_input(1) = a_dx
+	ary_mouse_input(2) = a_dy
+	ary_mouse_input(3) = 0
+	ary_mouse_input(4) = MOUSEEVENTF_MOVE
+	ary_mouse_input(5) = 0
+	ary_mouse_input(6) = 0
+	SIZE_INPUT = NUM_INPUT_MEMBERS * 4
+	SendInput num, varptr(ary_mouse_input), SIZE_INPUT
+	return
+
+#deffunc GetMouseInfo var a_mx, var a_my, var a_time
+	a_time = GetMiliSec()
+	a_mx = ginfo_mx
+	a_my = ginfo_my
+	return;
+
+#deffunc ShowGraph double a_ratio
+	bar_length = 200
+	bar_h = 20
+	bar_ox = 100
+	bar_oy = 52
+	color 0, 0, 0
+	boxf 0, bar_oy, bar_ox + bar_length, (bar_oy + bar_h)
+	if a_ratio > 0.0 {
+		color 0, 128, 0
+		boxf bar_ox, bar_oy, bar_ox + (1.0 - a_ratio) * bar_length, (bar_oy + bar_h)
+	}
+	return;
+
+#global
+
+title "Stop Screen Saver"
+screen 0, 320, 144
+boxf 0
+pos 16, 16
+color 255, 255, 255
+mes "時間(秒)\n"
+thresh_time = 60
+input thresh_time, 64, 24, 5
+pos 16, 96
+button gosub "使用条件", *license
+
+GetMouseInfo mx_prev, my_prev, time_prev
+logmes "(x, y) = (" + mx_prev + ", " + my_prev +"), time = " + time_prev
+
+interval_ms = 1000
+
+*main
+	while 1
+		// get current status
+		GetMouseInfo mx, my, time
+		diff_x = mx - mx_prev
+		diff_y = my - my_prev
+		diff_time = time - time_prev
+		// update
+		mx_prev = mx
+		my_prev = my
+		logmes "(x, y) = (" + diff_x + ", " + diff_y +"), past time = " + diff_time
+		if (diff_x = 0) and (diff_y = 0) {
+			// Mouse cursor didn't move for last 1 second.
+			if (diff_time > thresh_time * 1000) {
+				// Mouse cursor moved for last (thresh_time) second.
+				MoveCusor 10, 0
+				MoveCusor -10, 0
+				time_prev = time	// time_prev must be updated.
+				logmes "Mouse Cursor is moved."
+			}
+		}
+		else {
+			// Mouse cursor moved for last 1 second.
+			logmes "It moves itself."
+			time_prev = time
+		}
+
+		// graph
+		ratio = double(diff_time) / (thresh_time * 1000)
+		ShowGraph ratio
+
+		//
+		await interval_ms
+	wend
+
+	stop
+
+*license
+	dialog "このソフトは、スクリーンセーバーの発動を抑制します。\nセキュリティ面などを考慮し、ユーザの責任においてご利用ください。\n同意いただけない場合、ソフトを終了してください。", 1, "使用条件"
+	goto *main
