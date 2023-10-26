@@ -27,4 +27,4 @@ Hot Soup Processor
 
 ## 実行ファイル
 
-- [version 1.0.0.0](Arcives/StopScreenSaver_bin_v1.0.0.0.zip)
+- [version 1.0.0.0](../Arcives/StopScreenSaver_bin_v1.0.0.0.zip)
