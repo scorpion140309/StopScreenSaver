@@ -33,16 +33,20 @@
 	return;
 
 #deffunc ShowGraph double a_ratio
-	bar_length = 200
+	bar_w = 200
 	bar_h = 20
 	bar_ox = 100
 	bar_oy = 52
-	color 0, 0, 0
-	boxf 0, bar_oy, bar_ox + bar_length, (bar_oy + bar_h)
-	if a_ratio > 0.0 {
+	ratio = a_ratio
+	if ratio < 0.0 : ratio = 0.0
+	if ratio > 1.0 : ratio = 1.0
+	sep_x = bar_ox + ratio * bar_w
+	if ratio > 0.0 {
 		color 0, 128, 0
-		boxf bar_ox, bar_oy, bar_ox + (1.0 - a_ratio) * bar_length, (bar_oy + bar_h)
+		boxf bar_ox, bar_oy, sep_x, (bar_oy + bar_h)
 	}
+	color 64, 64, 64
+	boxf sep_x, bar_oy, bar_ox + bar_w, (bar_oy + bar_h)
 	return;
 
 #global
@@ -76,7 +80,8 @@ interval_ms = 1000
 		logmes "(x, y) = (" + diff_x + ", " + diff_y +"), past time = " + diff_time
 		if (diff_x = 0) and (diff_y = 0) {
 			// Mouse cursor didn't move for last 1 second.
-			if (diff_time > thresh_time * 1000) {
+			thresh_time_ms = thresh_time * 1000
+			if (diff_time > thresh_time_ms) {
 				// Mouse cursor moved for last (thresh_time) second.
 				MoveCusor 10, 0
 				MoveCusor -10, 0
@@ -91,7 +96,7 @@ interval_ms = 1000
 		}
 
 		// graph
-		ratio = double(diff_time) / (thresh_time * 1000)
+		ratio = 1.0 - double(diff_time) / thresh_time_ms
 		ShowGraph ratio
 
 		//
